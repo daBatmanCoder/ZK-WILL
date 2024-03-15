@@ -1,14 +1,42 @@
-const crypto = require("crypto");
-const { buildMimcSponge } = require("circomlibjs");
 const ethers = require("ethers");
 const fs = require("fs");
-const {Web3} = require('web3');
-const { from } = require("form-data");
-const path = require("path");
 
-const ZERO_VALUE = ethers.BigNumber.from('21663839004416932945382355908790599225266501822907911457504978515578255421292') // = keccak256("tornado") % FIELD_SIZE
+async function generateNull_N_Secret() {
+	const commitment = await generateCommitment();
+	const result = {
+		nullifier: commitment.nullifier,
+		secret: commitment.secret
+	};
+	console.log(result);
 
-// Assuming you have the contract ABI and address
+	await callCommitDeposit(commitment.commitment); 
+
+	fs.writeFileSync("./null_n_secret.json", JSON.stringify(result, null, 2));
+}
+
+async function generateCommitment() {
+    const nullifier = ethers.BigNumber.from(crypto.randomBytes(31)).toString();
+    const secret = ethers.BigNumber.from(crypto.randomBytes(31)).toString();
+    return {
+        nullifier: nullifier,
+        secret: secret
+    };
+}
+
+async function callCommitDeposit(commitment) {
+
+    try {
+        const tx = await merkleTreeContract.commitDeposit(commitment);
+
+        // Wait for the transaction to be mined
+        await tx.wait();
+
+        console.log('Transaction successful:', tx);
+    } catch (error) {
+        console.error('Transaction failed:', error);
+    }
+}
+
 const contractABI = [
 	{
 		"inputs": [
@@ -580,254 +608,4 @@ const PRIVATE_KEY = "1cf3bacf75f3c8580aabf395ddb3eb5bf2943ce44cc9907a60802a305c3
 const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 const merkleTreeContract = new ethers.Contract(contractAddress, contractABI, wallet);
 
-
-let web3 = new Web3(new Web3.providers.HttpProvider('https://polygon-mumbai.infura.io/v3/97d9c59729a745b790c2b1118ba098ef'));
-let web3Contract = new web3.eth.Contract(contractABI, contractAddress);
-
-async function generateCommitment() {
-    const mimc = await buildMimcSponge();
-    const nullifier = ethers.BigNumber.from(crypto.randomBytes(31)).toString();
-    const secret = ethers.BigNumber.from(crypto.randomBytes(31)).toString();
-    const commitment = mimc.F.toString(mimc.multiHash([nullifier, secret]));
-    const nullifierHash = mimc.F.toString(mimc.multiHash([nullifier]));
-    return {
-        nullifier: nullifier,
-        secret: secret,
-        commitment: commitment,
-        nullifierHash: nullifierHash
-    };
-}
-
-async function prepareProofFile() {
-
-	const commitments = await getPastEvents();
-    const mimc = await buildMimcSponge();
-    const levels = await merkleTreeContract.levels(); // Set this to your Merkle tree levels
-	const null_n_secret = fs.readFileSync("./null_n_secret.json", "utf-8");
-	const { nullifier, secret } = JSON.parse(null_n_secret);
-	console.log(nullifier);
-	console.log(secret);
-
-	// calculateInputToProof(mimc,levels,commitments, nullifier, secret);
-	const commitment = calculateHash(mimc, nullifier, secret);
-	const { root, pathElements, pathIndices } = await calculateMerkleRootAndPath(mimc, levels, commitments,commitment );
-	console.log(pathElements);	
-	console.log(pathIndices);	
-
-	// Convert commitments to hex strings with '0x' prefix
-	const pathElementss = pathElements.map(commitment => {
-		// Check if the commitment already starts with '0x', if not, convert it to hex string
-		return commitment.startsWith('0x') ? commitment : '0x' + BigInt(commitment).toString(16);
-	});
-	
-	// // Convert path indices to numbers
-	const pathIndicess = pathIndices.map(index => parseInt(index, 10));
-
-
-	const result = {
-		nullifier: nullifier,
-		secret: commitment.secret,
-		pathElements: JSON.stringify(pathElementss, null, 2),
-		pathIndices: JSON.stringify(pathIndicess, null, 2)
-	};
-
-    fs.writeFileSync("./circuits/verifier_js/input.json", JSON.stringify(result, null, 2));
-}
-
-async function generateNull_N_Secret() {
-	const commitment = await generateCommitment();
-	const result = {
-		nullifier: commitment.nullifier,
-		secret: commitment.secret
-	};
-
-	await callCommitDeposit(commitment.commitment); 
-
-	fs.writeFileSync("./null_n_secret.json", JSON.stringify(result, null, 2));
-}
-
-
-async function calculateInputToProof(mimc, levels, elements, nullifier, secret) {
-
-	const commitment = mimc.F.toString(mimc.multiHash([nullifier, secret]));
-
-	const { root, pathElements, pathIndices } = calculateMerkleRootAndPath(mimc, levels, elements, commitment);
-
-	const inputFile = {
-		"nullifier": nullifier,
-		"secret": secret,
-		"pathElements": pathElements,
-		"pathIndices": pathIndices
-	};
-	
-	return inputFile;
-}
-
-async function calculateMerkleRootAndPath(mimc, levels, elements, element) {
-
-	const capacity = 2 ** levels;
-    if (elements.length > capacity)
-        throw new Error('Tree is full');
-    const zeros = await generateZeros(mimc, levels);
-    let layers = [];
-    layers[0] = elements.slice();
-    for (let level = 1; level <= levels; level++) {
-        layers[level] = [];
-        for (let i = 0; i < Math.ceil(layers[level - 1].length / 2); i++) {
-            layers[level][i] = calculateHash(mimc, layers[level - 1][i * 2], i * 2 + 1 < layers[level - 1].length ? layers[level - 1][i * 2 + 1] : zeros[level - 1]);
-        }
-    }
-    const root = layers[levels].length > 0 ? layers[levels][0] : zeros[levels - 1];
-    let pathElements = [];
-    let pathIndices = [];
-	
-    if (element) {
-
-        const bne = ethers.BigNumber.from(element);
-        let index = layers[0].findIndex(e => ethers.BigNumber.from(e).eq(bne));
-
-        for (let i = 0; i < levels; i++) {
-            pathIndices[i] = index % 2;
-            pathElements[i] = (index ^ 1) < layers[i].length ? layers[i][index ^ 1] : zeros[i];
-            index >>= 1;
-        }
-    }
-
-
-    return {
-        root: root.toString(),
-        pathElements: pathElements.map(e => e.toString()),
-        pathIndices: pathIndices.map(e => e.toString())
-    };
-}
-
-async function generateZeros(mimc, levels) {
-	let zeros = [];
-    zeros[0] = ZERO_VALUE;
-    for (let i = 1; i <= levels; i++){
-		// zeros[i] = await merkleTreeContract.zeros(i);
-        zeros[i] = calculateHash(mimc, zeros[i - 1], zeros[i - 1]);
-	}
-    return zeros;
-}
-
-function calculateHash(mimc, left, right) {
-    return ethers.BigNumber.from(mimc.F.toString(mimc.multiHash([left, right])));
-}
-
-
-
-async function callCommitDeposit(commitment) {
-
-    try {
-        const tx = await merkleTreeContract.commitDeposit(commitment);
-
-        // Wait for the transaction to be mined
-        await tx.wait();
-
-        console.log('Transaction successful:', tx);
-    } catch (error) {
-        console.error('Transaction failed:', error);
-    }
-}
-
-async function getPastEvents() {
-    const events = await web3Contract.getPastEvents('Commit', {
-        fromBlock: 0, // Use appropriate block number to limit search range
-        toBlock: 'latest'
-    });
-	const commitments = events.map(events => events.returnValues.commitment);
-
-    console.log('Commitments:', commitments);
-	return commitments;
-}
-
-
-
-
-(async () => {  await prepareProofFile(); })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-// async function findBlockByTimestamp(targetTimestamp) {
-//     let minBlock = 0;
-//     let maxBlock = await provider.getBlockNumber();
-//     while (minBlock < maxBlock - 1) {
-//         const midBlock = Math.floor((minBlock + maxBlock) / 2);
-//         const block = await provider.getBlock(midBlock);
-//         if (block.timestamp < targetTimestamp) {
-//             minBlock = midBlock;
-//         } else {
-//             maxBlock = midBlock;
-//         }
-//     }
-//     return maxBlock;
-// }
-
-// async function calculateMerkleRootAndPathFromEvents() {
-//     const abi = [
-//         "event Commit(bytes32 indexed commitment,uint32 leafIndex,uint256 timestamp)"
-//     ];
-//     const contract = new ethers.Contract(contractAddress, abi, provider);
-//     const contractInitBlock = await findContractCreationBlock();
-//     console.log(contractInitBlock);
-
-//     // const startTime = 1710484600;
-//     // const startBlock = await findBlockByTimestamp(startTime);
-//     // console.log(startBlock);
-
-//     const latestBlock = await provider.getBlockNumber();
-//     const blockStep = 5000; // Define a smaller batch size to avoid exceeding the block range limit
-
-//     let fromBlock = startBlock;
-//     let commitments = [];
-
-//     while (fromBlock <= latestBlock) {
-//         const toBlock = Math.min(fromBlock + blockStep, latestBlock);
-
-//         // Query filter for a specific range
-//         const events = await contract.queryFilter(contract.filters.Commit(), fromBlock, toBlock);
-//         for (let event of events) {
-//             // Check if the event's timestamp matches your criteria before adding
-//             if (event.args.timestamp >= startTime) {
-//                 commitments.push(event.args.commitment);
-//             }
-//         }
-
-//         // Prepare for the next iteration
-//         fromBlock = toBlock + 1;
-//     }
-
-//     console.log(commitments);
-// }
-
-// async function findContractCreationBlock() {
-//     const latestBlockNumber = await provider.getBlockNumber();
-//     let found = false;
-
-//     for (let i = latestBlockNumber; i >= 0 && !found; i--) {
-//         const block = await provider.getBlockWithTransactions(i);
-//         for (const tx of block.transactions) {
-//             // Check if the contract creation transaction
-//             if (tx.to === null && tx.creates === contractAddress.toLowerCase()) {
-//                 console.log(`Contract ${contractAddress} was created in block ${i}`);
-//                 found = true;
-//                 break;
-//             }
-//         }
-//     }
-
-//     if (!found) {
-//         console.log(`Could not find the contract creation block for ${contractAddress}`);
-//     }
-// }
+(async () => {  await generateNull_N_Secret(); })();

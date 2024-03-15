@@ -5,7 +5,7 @@ echo "Running generateCommitment script..."
 node generateCommit.js
 echo "generateCommitment script finished."
 
-echo "Generating proof..."
+echo "generating proof..."
 node generateProof.js
 
 # Ensure the input.json file exists before proceeding
@@ -18,16 +18,18 @@ fi
 cd ./circuits/verifier_js
 
 # Generate the witness using the input.json file
-echo "Generating the witness, snarkjs and call..."
+echo "Generating the witness..."
 node generate_witness.js verifier.wasm input.json witness.wtns
 
 # Navigate back to the circuits folder
 cd ..
 
 # Generate the proof using the witness file
+echo "Generating the proof..."
 snarkjs groth16 prove verifier_0001.zkey verifier_js/witness.wtns proof.json public.json
 
 # Generate the call data for the smart contract using the simplified command
+echo "Generating the snark call.."
 callData=$(snarkjs generatecall)
 
 snarkjs generatecall
