@@ -435,5 +435,6 @@ And that's it!
 
 (Extra- added generateProof.sh bash script that does all the parts *after* the generation of the nullifier and the secret from the `generateCommit.js` file)
 
-WARNING: This library is not audited, so use it at your own risk.
-&copy; All right reserved to Jonathan Kandel(daBatmanCoder)
+## WARNING: This library is not audited, so use it at your own risk
+
+# &copy; All right reserved to Jonathan Kandel(daBatmanCoder)
