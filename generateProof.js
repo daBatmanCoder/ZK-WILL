@@ -601,35 +601,15 @@ async function generateCommitment() {
 async function prepareProofFile() {
 
 	const commitments = await getPastEvents();
+
     const mimc = await buildMimcSponge();
-    const levels = await merkleTreeContract.levels(); // Set this to your Merkle tree levels
+    const levels = await merkleTreeContract.levels(); 
 	const null_n_secret = fs.readFileSync("./null_n_secret.json", "utf-8");
 	const { nullifier, secret } = JSON.parse(null_n_secret);
-	console.log(nullifier);
-	console.log(secret);
 
-	// calculateInputToProof(mimc,levels,commitments, nullifier, secret);
-	const commitment = calculateHash(mimc, nullifier, secret);
-	const { root, pathElements, pathIndices } = await calculateMerkleRootAndPath(mimc, levels, commitments,commitment );
+	const inputJson = await calculateInputToProof(mimc, levels, commitments, nullifier, secret);
 
-	// Convert commitments to hex strings with '0x' prefix
-	const pathElementss = pathElements.map(commitment => {
-		// Check if the commitment already starts with '0x', if not, convert it to hex string
-		return commitment.startsWith('0x') ? commitment : '0x' + BigInt(commitment).toString(16);
-	});
-	
-	// // Convert path indices to numbers
-	const pathIndicess = pathIndices.map(index => parseInt(index, 10));
-
-
-	const result = {
-		nullifier: nullifier,
-		secret: secret,
-		pathElements: pathElementss,
-		pathIndices: pathIndicess
-	};
-
-    fs.writeFileSync("./circuits/verifier_js/input.json", JSON.stringify(result, null, 2));
+    fs.writeFileSync("./circuits/verifier_js/input.json", JSON.stringify(inputJson, null, 2));
 }
 
 async function generateNull_N_Secret() {
@@ -652,22 +632,32 @@ async function calculateInputToProof(mimc, levels, elements, nullifier, secret) 
 
 	const { root, pathElements, pathIndices } = calculateMerkleRootAndPath(mimc, levels, elements, commitment);
 
-	const inputFile = {
+	// Convert commitments to hex strings with '0x' prefix
+	const pathElementss = pathElements.map(commitment => {
+		// Check if the commitment already starts with '0x', if not, convert it to hex string
+		return commitment.startsWith('0x') ? commitment : '0x' + BigInt(commitment).toString(16);
+	});
+	
+	// // Convert path indices to numbers
+	const pathIndicess = pathIndices.map(index => parseInt(index, 10));
+
+
+	const inputJson = {
 		"nullifier": nullifier,
 		"secret": secret,
-		"pathElements": pathElements,
-		"pathIndices": pathIndices
+		"pathElements": pathElementss,
+		"pathIndices": pathIndicess
 	};
 	
-	return inputFile;
+	return inputJson;
 }
 
-async function calculateMerkleRootAndPath(mimc, levels, elements, element) {
+function calculateMerkleRootAndPath(mimc, levels, elements, element) {
 
 	const capacity = 2 ** levels;
     if (elements.length > capacity)
         throw new Error('Tree is full');
-    const zeros = await generateZeros(mimc, levels);
+    const zeros = generateZeros(mimc, levels);
     let layers = [];
     layers[0] = elements.slice();
     for (let level = 1; level <= levels; level++) {
@@ -700,7 +690,7 @@ async function calculateMerkleRootAndPath(mimc, levels, elements, element) {
     };
 }
 
-async function generateZeros(mimc, levels) {
+function generateZeros(mimc, levels) {
 	let zeros = [];
     zeros[0] = ZERO_VALUE;
     for (let i = 1; i <= levels; i++){

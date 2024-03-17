@@ -1,3 +1,4 @@
+# 
 circom verifier.circom --r1cs --wasm --sym --c
 
 snarkjs powersoftau new bn128 15 pot15_0000.ptau -v

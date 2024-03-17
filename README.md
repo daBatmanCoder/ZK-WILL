@@ -3,7 +3,7 @@
 
 The project is based on the source code of [Tornado Cash](https://github.com/tornadocash/tornado-core). The most essential component of tornado core is a Merkle tree where users can deposit ethers with a random `commitment`, that can be withdrawn with a `nullifier`. The nullifier is assigned to the commitment, but nobody knows which commitment is assigned to which nullifier, because the link between them is the zero-knowledge.
 
-## Set up,
+## Set up
 
 We need to install the following libraries for this project-
 - node modules - `circomlib`,
@@ -15,11 +15,11 @@ We need to install the following libraries for this project-
 
 ## Usage
 
-First we start with our circuits,
+First we start with our circuits
 
 ### Merkle Tree
 
-- We generate a file named - merkleTree.circom (taken complelty from tornado cash),
+- We generate a file named - merkleTree.circom (taken complelty from tornado cash)
 
 ```java
 pragma circom 2.0.0;
@@ -94,8 +94,8 @@ This template verifies a Merkle proof by iteratively hashing up the Merkle tree 
 For each level of the tree, the template uses a DualMux component to select the correct order of elements based on pathIndices and then hashes the selected pair using a HashLeftRight component. The process is repeated for each level of the tree, with the output of each hash serving as the input to the next level. The final hash at the top level is considered the computed root of the Merkle tree, which should match the actual root for the proof to be valid.
 (Usually being done in the blockchain)
 
-#####
-Now that we understood how merkle tree circuit is working we can continue to the withdraw implementation
+
+## Now that we understood how merkle tree circuit is working we can continue to the withdraw implementation
 
 ### Withdraw (Will)
 
@@ -175,6 +175,7 @@ The withdraw template thus encapsulates the entire process of verifying a withdr
 The component main is the entry point of the circuit.
 
 
+## Circuit compiling [#compiling]
 Now we need to call the following commands in order to compile the circuit-
 you can also follow the steps in the circom website("https://docs.circom.io/getting-started/installation/")
 
@@ -184,6 +185,8 @@ circom verifier.circom --r1cs --wasm --sym --c
 ```bash
 snarkjs powersoftau new bn128 15 pot15_0000.ptau -v
 ```
+- We needed to use pot15 because the number of constrains
+
 ```bash
 snarkjs powersoftau contribute pot15_0000.ptau pot15_0001.ptau --name="First contribution" -v
 ```
@@ -200,131 +203,239 @@ snarkjs zkey contribute verifier_0000.zkey verifier_0001.zkey --name="1st Contri
 snarkjs zkey export verificationkey verifier_0001.zkey verification_key.json
 ```
 
-### Smart contract creation-
+### Smart contract creation 
 
 ```bash
 snarkjs zkey export solidityverifier verifier_0001.zkey verifier.sol
 ```
 
-This command is used to generate a Solidity smart contract that can verify a zk-SNARK proof.
+This command is used to generate a Solidity smart contract that can verify a zk-SNARK proof- pay attention that every time you compile the verifier.sol will be different,
+in the steps you did that compiled the circuit you entered different entropy to the ceremony.
 
 
-### 
+###
 
+Now let's go over the contracts-
 
+#### ZKWillHandler is the co-pilot for the ZK-Will contract that implemented the logic
 
+```solidity
+// SPDX-License-Identifier: GPL-3.0
 
+pragma solidity ^0.8.20;
 
+import "./MerkleTreeWithHistory.sol";
 
+interface IVerifier {
 
+    function verifyProof(
+        uint[2] memory a,
+        uint[2][2] memory b,
+        uint[2] memory c,
+        uint[2] memory input
+    ) external pure returns (bool r);
 
+}
 
+contract ZKWillHandler is MerkleTreeWithHistory {
 
+    mapping(bytes32 => bool) public nullifiers;
+    mapping(bytes32 => bool) public commitments;
+    mapping(address => uint256) public TTL;
 
+    IVerifier public immutable verifier;
 
+    event Commit(
+        bytes32 indexed commitment,
+        uint32 leafIndex,
+        uint256 timestamp
+    );
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
-
-import "zk-merkle-tree/contracts/ZKTree.sol";
-
-contract ZKTreeVote is ZKTree {
-    address public owner;
-    mapping(address => bool) public validators;
-    mapping(uint256 => bool) uniqueHashes;
-    uint numOptions;
-    mapping(uint => uint) optionCounter;
+    event TimeStep(
+        uint256 previous_timestep,
+        uint256 timestap
+    );
 
     constructor(
         uint32 _levels,
         IHasher _hasher,
-        IVerifier _verifier,
-        uint _numOptions
-    ) ZKTree(_levels, _hasher, _verifier) {
-        owner = msg.sender;
-        numOptions = _numOptions;
-        for (uint i = 0; i <= numOptions; i++) optionCounter[i] = 0;
+        IVerifier _verifier
+    ) MerkleTreeWithHistory(_levels, _hasher) {
+        verifier = _verifier;
     }
 
-    function registerValidator(address _validator) external {
-        require(msg.sender == owner, "Only owner can add validator!");
-        validators[_validator] = true;
+    function _depositWill(bytes32 _commitmentDeposit) internal {
+        require(!commitments[_commitmentDeposit], "The commitment has been submitted");
+
+        commitments[_commitmentDeposit] = true;
+
+        TTL[msg.sender] = block.timestamp;
+
+        uint32 insertedIndex = _insert(_commitmentDeposit);
+        emit Commit(_commitmentDeposit, insertedIndex, block.number);
     }
 
-    function registerCommitment(
-        uint256 _uniqueHash,
-        uint256 _commitment
-    ) external {
-        require(validators[msg.sender], "Only validator can commit!");
-        require(
-            !uniqueHashes[_uniqueHash],
-            "This unique hash is already used!"
-        );
-        _commit(bytes32(_commitment));
-        uniqueHashes[_uniqueHash] = true;
-    }
-
-    function vote(
-        uint _option,
-        uint256 _nullifier,
-        uint256 _root,
+    function _withdrawWill(
         uint[2] memory _proof_a,
         uint[2][2] memory _proof_b,
-        uint[2] memory _proof_c
-    ) external {
-        require(_option <= numOptions, "Invalid option!");
-        _nullify(
-            bytes32(_nullifier),
-            bytes32(_root),
-            _proof_a,
-            _proof_b,
-            _proof_c
+        uint[2] memory _proof_c,
+        bytes32 _nullifierHash,
+        bytes32 _root
+    ) internal view returns (string memory){
+        require(!nullifiers[_nullifierHash], "The nullifier has been submitted");
+        require(isKnownRoot(_root), "Cannot find your merkle root");
+        require(
+            verifier.verifyProof(
+                _proof_a,
+                _proof_b,
+                _proof_c,
+                [uint256(_nullifierHash), uint256(_root)]
+            ),
+            "Invalid proof"
         );
-        optionCounter[_option] = optionCounter[_option] + 1;
+
+        uint secondsElapsed = (block.timestamp - TTL[msg.sender]) * 2;
+        string memory secondsPast = uintToString(secondsElapsed);
+        return string(abi.encodePacked(secondsPast, " seconds past from the deposit"));
     }
 
-    function getOptionCounter(uint _option) external view returns (uint) {
-        return optionCounter[_option];
+    function uintToString(uint v) internal pure returns (string memory) {
+        uint maxlength = 100;
+        bytes memory reversed = new bytes(maxlength);
+        uint i = 0;
+        while (v != 0) {
+            uint remainder = v % 10;
+            v = v / 10;
+            reversed[i++] = bytes1(uint8(48 + remainder));
+        }
+        bytes memory s = new bytes(i);
+        for (uint j = 0; j < i; j++) {
+            s[j] = reversed[i - 1 - j];
+        }
+
+        return string(s);
+    }
+
+}
+```
+
+The constructor has 3 parameters:
+- `_levels` is the levels of the Merkle tree. **It has to be 20 if you use the default Verifier.** If you want to use different number of levels, you have to implement your own Verifier circuit.
+- `_hasher` is the address of the MiMC sponge smart contract. * in order to generate this contract you'll have to use hardhat and circomlibjs library. - (more about it in the future, for now if you're in Mumbai(polygon testnet) you can use this address - 0xfCb643f284A5dC8ae58Ce8670e56E18918702984 )
+- `_verifier` is the address of the Verifier contract. It is generated from the Verifier (`circuits/Verifier.circom`) circuit by the prepare script (`scripts/preapre.sh`).
+
+
+The `_depositWill` method implements the `depositWill` method. It has 1 parameters:
+- `_commitment` is the commitment of the user.
+
+The `_withdrawWill` method implements the `withdrawWill` method. It has 5 parameters:
+- `_nullifierHash` is the nullifier hash for the commitment.
+- `_root` is the Merkle root for the proof.
+- `_proof_a`, `_proof_b` and `_proof_c` are the zero-knowledge proof.
+(for now this function returns the Time paste since the deposit- no state changer)
+
+The commitment and the nullifier hash are generated on the client side by the `generateCommitment` method in the `generateCommit.js` file(later specific implementation)
+
+To generate the zero-knowledge proof, use `prepareProofFile` in the `generateProof` file,
+(aswell specific later)
+
+#### ZKWill 
+
+this contract is the direct interaction with the 2 methods-
+
+```solidity
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity ^0.8.20;
+
+import "./ZKWillHandler.sol";
+
+contract ZKWill is ZKWillHandler {
+
+    constructor(
+        uint32 _levels,
+        IHasher _hasher,
+        IVerifier _verifier
+    ) ZKWillHandler(_levels, _hasher, _verifier) {}
+
+    function commitDeposit(uint256 _commitmentDeposit) external {
+        _depositWill(bytes32(_commitmentDeposit));
+    }
+
+    function withdrawWill(
+        uint[2] memory _proof_a,
+        uint[2][2] memory _proof_b,
+        uint[2] memory _proof_c,
+        uint256 _nullifierHash,
+        uint256 _root
+    ) external view returns (string memory){
+         return _withdrawWill(
+            _proof_a,
+            _proof_b,
+            _proof_c,
+            bytes32(_nullifierHash),
+            bytes32(_root)
+        );
     }
 }
 ```
 
-The constructor has 4 parameters:
-- `_levels` is the levels of the Merkle tree. **It has to be 20 if you use the default Verifier.** If you want to use different number of levels, you have to implement your own Verifier circuit.
-- `_hasher` is the address of the MiMC sponge smart contract. (Check the `test` folder for the MiMC sponge generator code.) 
-- `_verifier` is the address of the Verifier contract. It is generated from the Verifier (`circuits/Verifier.circom`) circuit by the prepare script (`scripts/preapre.sh`).
-- `_numOptions` is the number of options.
+The `commitDeposit` is the `_depositWill` co-pilot,
+The `withdrawWill` is the `_withdrawWill` co-pilot aswell.
 
+#### MerkleTreeWithHistory is exactly the same as tornado cash
 
-The `registerCommitment` method implements the `_commit` method. It has 2 parameters:
-- `_uniqueHash` is a unique hash of the voter (ex.: the hash of the ID card). It ensures that one voter is registered only once.
-- `_commitment` is the commitment of the user.
+## How to start
+Our whole interaction with the blockchain is going to be with the ZK-Will contract.
+We can start commiting wills and withdrawing when desired.
 
-The `vote` method implements the `_nullify` method. It has 6 parameters:
-- `_option` is the option what the voter chooses.
-- `_nullifier` is the nullifier for the commitment.
-- `_root` is the Merkle root for the proof.
-- `_proof_a`, `_proof_b` and `_proof_c` are the zero-knowledge proof.
+### generateCommit.js
 
-The commitment and the nullifier is generated on the client side by the `generateCommitment` method. (Please check the [VoterRegistration](https://github.com/TheBojda/zktree-vote/blob/main/src/components/VoterRegistration.vue) component in the `zktree-vote` project.) 
+First we need to generate the `nullifier` and the `secret`, hash them together using MiMCSponge hashing algo' (the choice for that algo' is because it's fast with zk-proofs, reliable and cheap), output the `commitment`, and call the method - `commitDeposit` from the deployed contract.
 
-To generate the zero-knowledge proof, use `calculateMerkleRootAndZKProof`. (Please check the [Vote](https://github.com/TheBojda/zktree-vote/blob/main/src/components/Vote.vue) component in the `zktree-vote` project.)
+That will input the tree the newly created commitment.
 
-For more info, please check the `test` folder in the repository and the [zktree-vote](https://github.com/TheBojda/zktree-vote) project.
+### generateProof.js
+
+Whenever we want to withdraw the will(for now it's just going to return the time past since the deposit of the will), we need to look at the current state of the tree with our nullifier and secret, and calculate the path and indicies to the state the tree is in.
+To achieve that we call the `prepareProofFile` function, that will read the nullifier and the secret from a local file- `null_n_secret.json`, and will calculate the the input file necessary to perfrom the proof- and will write to `input.json` already in the witness relevant folder, for me it was- `./circuits/verifier_js/` (*1),
+now that we have generate the relevant input for the circuit to calculate the proof, we can call from that folder (*1) the following command-
+```bash
+node generate_witness.js verifier.wasm input.json witness.wtns
+```
+
+and then head back to the main folder, all the compiling of the circuits were made and call- (with the relevant parameters when entered when compiling the circuits #compiling )
+```bash
+snarkjs groth16 prove verifier_0001.zkey ./verifier_js/witness.wtns proof.json public.json
+```
+
+That command will generate 2 files, `proof.json` and `public.json` that will be used when calculating the call,
+The `proof.json`- contains all the relevant information of the proof for the snarkjs module to construct the call,
+The `public.json` - contains the output values of the circuits for the `input.json` file we created earlier.
+
+We can verify that the proof is valid locally using (ours or other)
+```bash
+snarkjs groth16 verify verification_key.json public.json proof.json
+```
+
+or output it to the screen using - 
+```bash
+snarkjs generatecall
+```
+
+An example of such call will be -
+```json
+["0x0e7f526aa87256cd35d299ec3db22d7b91334d6918634deaac739a4d2a93706e", "0x05079fd291281c2189d413a97dab5c90f955df6cfee8317068de9c41a8d4318f"],[["0x1062ae193b3b56badbb3483da638f757b02950993979f24952363fc4ac475745", "0x1bd3d4859738ed168314d76ee26e03c50be325c860ecab4f64726727331cc61f"],["0x2b028d563b748f4200820581cf428353fdb4d56fe4b64182a43e17fcaf501e9b", "0x13d648152377649f3baaa46d3c5820b8253a71f02018262afa89cdafcb85ab9c"]],["0x187b61ef0fe15f053431e88c8c7d983b62bc3a61f3b6b56eb1c94a24af91f7ca", "0x2cd631a82d2531bffa7f0b1df2d91e9f722c20b155608c21967656f93fb58e6e"],["0x10dd8b53f667820e4a2bacd826a517f12c156ee52c5b4516f506b310f8193b32","0x0a686c35f00ece757494bdd9db61369355790640fb6a43791d2b578b82b0f355"]
+```
+
+with that output we can call the `callWithdraw.js` file that will prepare the data, and will call the contract's `withdrawWill` function to receive the Will(for now it's going to be the time past since the specific deposit generated in the beginning- the nullifier and secret).
+
+If everything was alright the output will be -
+"<T> seconds past from the deposit" - where <T> is the amout of seconds past.
+
+And that's it!
+
+(Extra- added generateProof.sh bash script that does all the parts *after* the generation of the nullifier and the secret from the `generateCommit.js` file)
 
 WARNING: This library is not audited, so use it at your own risk.
+&copy; All right reserved to Jonathan Kandel(daBatmanCoder)

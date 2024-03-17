@@ -26,7 +26,7 @@ template CommitmentHasher() {
 }
 
 
-template verifier(levels) {
+template withdraw(levels) {
     signal input nullifier;
     signal input secret;
     signal input pathElements[levels];
