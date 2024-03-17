@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Merkle Tree UI</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+    <style>
+        body {
+            background-color: #add8e6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .input-group {
+            margin-top: 40px;
+        }
+
+        input[type="text"] {
+            padding: 100px;
+            margin-right: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            font-size: 20px;
+            padding: 15px 30px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <button id="insertBtn">Insert</button>
+        <button id="withdrawBtn">Withdraw</button>
+    </div>
+    <div class="input-group">
+        <input type="text" id="nullifierInput" placeholder="Nullifier">
+    </div>
+    <div class="input-group">
+        <input type="text" id="secretInput" placeholder="Secret">
+    </div>
+    <script src="bundledCommitment.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
