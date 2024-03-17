@@ -171,7 +171,7 @@ The withdraw template thus encapsulates the entire process of verifying a withdr
 The component main is the entry point of the circuit.
 
 
-## Circuit compiling <a name="compilingC"></a>
+## Circuit compiling (#compilingC)
 Now we need to call the following commands in order to compile the circuit-
 you can also follow the steps in the circom website("https://docs.circom.io/getting-started/installation/")
 
@@ -400,7 +400,8 @@ now that we have generate the relevant input for the circuit to calculate the pr
 node generate_witness.js verifier.wasm input.json witness.wtns
 ```
 
-and then head back to the main folder, all the compiling of the circuits were made and call- (with the relevant parameters when entered when compiling the circuits             (#compilingC)
+and then head back to the main folder, all the compiling of the circuits were made and call- (with the relevant parameters when entered when compiling the circuits compile
+<a name="compilingC"></a>
 ```bash
 snarkjs groth16 prove verifier_0001.zkey ./verifier_js/witness.wtns proof.json public.json
 ```
