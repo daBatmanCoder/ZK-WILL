@@ -15,7 +15,7 @@ We need to install the following libraries for this project-
 
 ## Usage
 
-First we start with our circuits
+We start with our circuits
 
 ### Merkle Tree
 
@@ -39,8 +39,6 @@ template HashLeftRight() {
     hash <== hasher.outs[0];
 }
 
-// if s == 0 returns [in[0], in[1]]
-// if s == 1 returns [in[1], in[0]]
 template DualMux() {
     signal input in[2];
     signal input s;
@@ -51,8 +49,6 @@ template DualMux() {
     out[1] <== (in[0] - in[1])*s + in[1];
 }
 
-// Verifies that merkle proof is correct for given merkle root and a leaf
-// pathIndices input is an array of 0/1 selectors telling whether given pathElement is on the left or right side of merkle path
 template MerkleTreeChecker(levels) {
     signal input leaf;
     signal input pathElements[levels];
@@ -175,7 +171,7 @@ The withdraw template thus encapsulates the entire process of verifying a withdr
 The component main is the entry point of the circuit.
 
 
-## Circuit compiling [#compiling]
+## Circuit compiling [#compilingC]
 Now we need to call the following commands in order to compile the circuit-
 you can also follow the steps in the circom website("https://docs.circom.io/getting-started/installation/")
 
@@ -404,7 +400,7 @@ now that we have generate the relevant input for the circuit to calculate the pr
 node generate_witness.js verifier.wasm input.json witness.wtns
 ```
 
-and then head back to the main folder, all the compiling of the circuits were made and call- (with the relevant parameters when entered when compiling the circuits #compiling )
+and then head back to the main folder, all the compiling of the circuits were made and call- (with the relevant parameters when entered when compiling the circuits             # compilingC )
 ```bash
 snarkjs groth16 prove verifier_0001.zkey ./verifier_js/witness.wtns proof.json public.json
 ```
