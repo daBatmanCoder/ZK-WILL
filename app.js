@@ -1,28 +1,51 @@
 const insertBtn = document.getElementById('insertBtn');
-const withdrawBtn = document.getElementById('withdrawBtn');
+// const withdrawBtn = document.getElementById('withdrawBtn');
 
 insertBtn.addEventListener('click', async () => {
-
-    const commitments = await generateCommitment();
-    // console.log('Generated commitment:', commitments);
-    console.log(commitments.commitment);
-    // const provider = new ethers.providers.Web3Provider(window.ethereum);
-    // await provider.send("eth_requestAccounts", []);
-    // const signer = provider.getSigner();
-    // const contract = new ethers.Contract(contractAddress, contractABI, signer);
-    // await contract.insert(commitments.commitment);  // Replace 'insert' with your actual contract function for adding a commitment
+    const commitment = await generateCommitment();
+    console.log(commitment.commitment);
+    const result = await callCommitDeposit(commitment.commitment);
+    if (result) {
+        document.getElementById('resultBox').innerText = 'Insertion successful';
+        document.getElementById('nullifier').innerText = commitment.nullifier;
+        document.getElementById('secret').innerText = commitment.secret;
+    } else {
+        document.getElementById('resultBox').innerText = 'Insertion failed';
+    }
 });
 
-withdrawBtn.addEventListener('click', async () => {
-    // Call your backend to generate a proof based on the saved nullifier and secret
-    // This is a pseudo-code. Replace it with your actual AJAX call or Fetch API call to your backend
-    const response = await fetch('/generateProof', { method: 'POST' });
-    const { proof } = await response.json();
-    console.log('Proof generated:', proof);
-    
-    // Withdraw using the generated proof (replace with your actual contract method call)
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    const contract = new ethers.Contract(contractAddress, contractABI, signer);
-    await contract.withdrawWill(proof);  // Replace 'withdrawWill' with your actual contract function for withdrawing
+document.getElementById('withdrawBtn').addEventListener('click', async function(event) {
+    event.preventDefault();
+    await fetchData();
 });
+
+async function fetchData() {
+    console.log('Withdraw button clicked');
+    try {
+        const nullifier = document.getElementById('nullifier').innerText;
+        const secret = document.getElementById('secret').innerText;
+        const inputFile = await prepareProofFile(nullifier, secret);
+        
+        const response = await fetch('http://localhost:3000/generate-proof', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(inputFile),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+        }
+
+        const responseData = await response.json();
+        console.log(responseData['result']);
+        document.getElementById('withdrawResult').innerText = responseData['result'];
+
+    } catch (error) {
+        console.error('Error sending proof data:', error);
+    }
+
+    console.log('Ending');
+}
+

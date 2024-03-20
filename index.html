@@ -57,13 +57,17 @@
         <button id="insertBtn">Insert</button>
         <button id="withdrawBtn">Withdraw</button>
     </div>
-    <div class="input-group">
-        <input type="text" id="nullifierInput" placeholder="Nullifier">
-    </div>
-    <div class="input-group">
-        <input type="text" id="secretInput" placeholder="Secret">
-    </div>
-    <script src="bundledCommitment.js"></script>
+    <input type="hidden" id="nullifier">
+    <input type="hidden" id="secret">
+    
+    <div id="resultBox"></div>
+    
     <script src="app.js"></script>
+    <script src="bundledCommitment.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.3.4/dist/web3.min.js"></script>
+    <script src="proofClient.js"></script>
+    <div id="withdrawResult"></div>
 </body>
 </html>
+
+

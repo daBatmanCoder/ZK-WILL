@@ -32,8 +32,8 @@ callData=$(snarkjs generatecall)
 
 snarkjs generatecall
 
-# # Navigate back to the root directory
-cd ..
+# # # Navigate back to the root directory
+# cd ..
 
-# Call the callWithdraw.js script with the captured call data
-node callWithdraw.js "$callData"
+# # Call the callWithdraw.js script with the captured call data
+# node callWithdraw.js "$callData"

@@ -46,6 +46,7 @@ template withdraw(levels) {
         merkleTreeChecker.pathIndices[i] <== pathIndices[i];
     }
 
+
     nullifierHash <== commitmentHasher.nullifierHash;
     root <== merkleTreeChecker.root;
 }

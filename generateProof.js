@@ -14,24 +14,6 @@ const contractABI = [
 		"inputs": [
 			{
 				"internalType": "uint32",
-				"name": "_data1",
-				"type": "uint32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "_data2",
-				"type": "bytes32"
-			}
-		],
-		"name": "addTuple",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint32",
 				"name": "_levels",
 				"type": "uint32"
 			},
@@ -77,12 +59,37 @@ const contractABI = [
 	{
 		"inputs": [
 			{
+				"internalType": "uint256[2]",
+				"name": "_proof_a",
+				"type": "uint256[2]"
+			},
+			{
+				"internalType": "uint256[2][2]",
+				"name": "_proof_b",
+				"type": "uint256[2][2]"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "_proof_c",
+				"type": "uint256[2]"
+			},
+			{
 				"internalType": "uint256",
-				"name": "_commitmentDeposit",
+				"name": "_nullifierHash",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_root",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_commitment",
 				"type": "uint256"
 			}
 		],
-		"name": "commitDeposit",
+		"name": "depositToBox",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -119,6 +126,24 @@ const contractABI = [
 		"type": "event"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_commitment",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint32",
+				"name": "_lifeSpan",
+				"type": "uint32"
+			}
+		],
+		"name": "openBOX",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -138,23 +163,118 @@ const contractABI = [
 		"type": "event"
 	},
 	{
-		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": false,
+				"internalType": "uint256[2]",
+				"name": "_proof_a",
+				"type": "uint256[2]"
+			},
+			{
+				"internalType": "uint256[2][2]",
+				"name": "_proof_b",
+				"type": "uint256[2][2]"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "_proof_c",
+				"type": "uint256[2]"
+			},
+			{
 				"internalType": "uint256",
-				"name": "previous_timestep",
+				"name": "_nullifierHash",
 				"type": "uint256"
 			},
 			{
-				"indexed": false,
 				"internalType": "uint256",
-				"name": "timestap",
+				"name": "_root",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_commitment",
 				"type": "uint256"
 			}
 		],
-		"name": "TimeStep",
-		"type": "event"
+		"name": "withdrawMoney",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "boxAmount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "boxCreationTime",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "BOXLifespan",
+		"outputs": [
+			{
+				"internalType": "uint32",
+				"name": "",
+				"type": "uint32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "boxOwner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -247,43 +367,6 @@ const contractABI = [
 				"internalType": "bytes32[]",
 				"name": "",
 				"type": "bytes32[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "index",
-				"type": "uint256"
-			}
-		],
-		"name": "getTupleAtIndex",
-		"outputs": [
-			{
-				"internalType": "uint32",
-				"name": "",
-				"type": "uint32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getTupleCount",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -383,30 +466,6 @@ const contractABI = [
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "myArray",
-		"outputs": [
-			{
-				"internalType": "uint32",
-				"name": "data1",
-				"type": "uint32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "data2",
-				"type": "bytes32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "nextIndex",
 		"outputs": [
@@ -414,25 +473,6 @@ const contractABI = [
 				"internalType": "uint32",
 				"name": "",
 				"type": "uint32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"name": "nullifiers",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -471,25 +511,6 @@ const contractABI = [
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "TTL",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "verifier",
 		"outputs": [
@@ -497,45 +518,6 @@ const contractABI = [
 				"internalType": "contract IVerifier",
 				"name": "",
 				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256[2]",
-				"name": "_proof_a",
-				"type": "uint256[2]"
-			},
-			{
-				"internalType": "uint256[2][2]",
-				"name": "_proof_b",
-				"type": "uint256[2][2]"
-			},
-			{
-				"internalType": "uint256[2]",
-				"name": "_proof_c",
-				"type": "uint256[2]"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_nullifierHash",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_root",
-				"type": "uint256"
-			}
-		],
-		"name": "withdrawWill",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
 			}
 		],
 		"stateMutability": "view",
@@ -574,7 +556,7 @@ const contractABI = [
 		"type": "function"
 	}
 ];
-const contractAddress = "0xA91b1ab6b1F6E1baA8AD22D33c15E48195d3108b";
+const contractAddress = "0xD5175E00b57c3539f9690D503A3148B526F31a98";
 const provider = new ethers.providers.JsonRpcProvider("https://polygon-mumbai.infura.io/v3/97d9c59729a745b790c2b1118ba098ef");
 const PRIVATE_KEY = "1cf3bacf75f3c8580aabf395ddb3eb5bf2943ce44cc9907a60802a305c3f4e09"
 const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
@@ -600,17 +582,20 @@ async function generateCommitment() {
 
 async function prepareProofFile() {
 
+	console.log("prepareProofFile");
+
 	const commitments = await getPastEvents();
 
     const mimc = await buildMimcSponge();
     const levels = await merkleTreeContract.levels(); 
+	console.log(levels);
 	const null_n_secret = fs.readFileSync("./null_n_secret.json", "utf-8");
 	const { nullifier, secret } = JSON.parse(null_n_secret);
 
 	const inputJson = await calculateInputToProof(mimc, levels, commitments, nullifier, secret);
-
     fs.writeFileSync("./circuits/verifier_js/input.json", JSON.stringify(inputJson, null, 2));
 }
+// window.prepareProofFile = prepareProofFile;
 
 async function generateNull_N_Secret() {
 	const commitment = await generateCommitment();
@@ -637,6 +622,7 @@ async function calculateInputToProof(mimc, levels, elements, nullifier, secret) 
 		// Check if the commitment already starts with '0x', if not, convert it to hex string
 		return commitment.startsWith('0x') ? commitment : '0x' + BigInt(commitment).toString(16);
 	});
+
 	
 	// // Convert path indices to numbers
 	const pathIndicess = pathIndices.map(index => parseInt(index, 10));
@@ -682,7 +668,7 @@ function calculateMerkleRootAndPath(mimc, levels, elements, element) {
         }
     }
 
-
+	console.log(root.toString());	
     return {
         root: root.toString(),
         pathElements: pathElements.map(e => e.toString()),

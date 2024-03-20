@@ -6,12 +6,13 @@ const { buildMimcSponge } = require("circomlibjs");
 
 async function generateNull_N_Secret_To_File() {
 	const commitment = await generateCommitment();
+	console.log(commitment);
 	const result = {
 		nullifier: commitment.nullifier,
 		secret: commitment.secret
 	};
 
-	await callCommitDeposit(commitment.commitment); 
+	// await callCommitDeposit(commitment.commitment); 
 
 	fs.writeFileSync("./null_n_secret.json", JSON.stringify(result, null, 2));
 }
@@ -21,12 +22,14 @@ async function generateCommitment() {
     const nullifier = ethers.BigNumber.from(crypto.randomBytes(31)).toString();
     const secret = ethers.BigNumber.from(crypto.randomBytes(31)).toString();
     const commitment = mimc.F.toString(mimc.multiHash([nullifier, secret]));
-    return {
+    const response =  {
         nullifier: nullifier,
         secret: secret,
         commitment: commitment
     };
+	return response;
 }
+// window.generateCommitment = generateCommitment;
 
 async function callCommitDeposit(commitment) {
 
@@ -37,10 +40,13 @@ async function callCommitDeposit(commitment) {
         await tx.wait();
 
         console.log('Transaction successful:', tx);
+		return true;
     } catch (error) {
         console.error('Transaction failed:', error);
+		return false;
     }
 }
+// window.callCommitDeposit = callCommitDeposit;
 
 const contractABI = [
 	{

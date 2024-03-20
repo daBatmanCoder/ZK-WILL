@@ -576,6 +576,8 @@ const contract = new ethers.Contract(contractAddress, contractABI, wallet);
 // Function to call withdrawWill
 async function callWithdraw(callData) {
 
+	// console.log('callData:', callData);
+
     // Manually split the string to extract the arguments
     const parts = callData.split(',[');
 
@@ -616,7 +618,8 @@ async function callWithdraw(callData) {
 
     // Call the withdrawWill function
     const result = await contract.withdrawWill(proof_a, proof_b, proof_c, nullifierHash, root);
-    console.log('Transaction successful:', result);
+	
+    console.log(result);
 }
 
 // Get callData from command line argument

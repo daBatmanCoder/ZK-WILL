@@ -12,7 +12,6 @@ We need to install the following libraries for this project-
 - circom - ("https://docs.circom.io/getting-started/installation/")
 
 
-
 ## Usage
 
 We start with our circuits
@@ -90,6 +89,7 @@ This template verifies a Merkle proof by iteratively hashing up the Merkle tree 
 For each level of the tree, the template uses a DualMux component to select the correct order of elements based on pathIndices and then hashes the selected pair using a HashLeftRight component. The process is repeated for each level of the tree, with the output of each hash serving as the input to the next level. The final hash at the top level is considered the computed root of the Merkle tree, which should match the actual root for the proof to be valid.
 (Usually being done in the blockchain)
 
+***
 
 ## Now that we understood how merkle tree circuit is working we can continue to the withdraw implementation
 
@@ -208,10 +208,8 @@ snarkjs zkey export solidityverifier verifier_0001.zkey verifier.sol
 This command is used to generate a Solidity smart contract that can verify a zk-SNARK proof- pay attention that every time you compile the verifier.sol will be different,
 in the steps you did that compiled the circuit you entered different entropy to the ceremony.
 
-
-###
-
-Now let's go over the contracts-
+***
+### Contracts
 
 #### ZKWillHandler is the co-pilot for the ZK-Will contract that implemented the logic
 
@@ -379,18 +377,22 @@ contract ZKWill is ZKWillHandler {
 The `commitDeposit` is the `_depositWill` co-pilot,
 The `withdrawWill` is the `_withdrawWill` co-pilot aswell.
 
-#### MerkleTreeWithHistory is exactly the same as tornado cash
 
+#### MerkleTreeWithHistory is exactly the same as tornado cash
+***
+***
 ## How to start
 Our whole interaction with the blockchain is going to be with the ZK-Will contract.
 We can start commiting wills and withdrawing when desired.
 
+***
 ### generateCommit.js
 
 First we need to generate the `nullifier` and the `secret`, hash them together using MiMCSponge hashing algo' (the choice for that algo' is because it's fast with zk-proofs, reliable and cheap), output the `commitment`, and call the method - `commitDeposit` from the deployed contract.
 
 That will input the tree the newly created commitment.
 
+***
 ### generateProof.js
 
 Whenever we want to withdraw the will(for now it's just going to return the time past since the deposit of the will), we need to look at the current state of the tree with our nullifier and secret, and calculate the path and indicies to the state the tree is in.
@@ -432,8 +434,13 @@ If everything was alright the output will be -
 "<T> seconds past from the deposit" - where <T> is the amout of seconds past.
 
 And that's it!
+***
 
 (Extra- added generateProof.sh bash script that does all the parts *after* the generation of the nullifier and the secret from the `generateCommit.js` file)
+
+***
+**** 
+*****
 
 ### WARNING: This library is not audited, so use it at your own risk
 
