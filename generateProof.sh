@@ -2,7 +2,7 @@
 
 # Run the generateCommitment script and wait for it to finish
 echo "Running generateCommitment script..."
-# node generateCommit.js
+node generateCommit.js
 echo "generateCommitment script finished."
 
 echo "Generating proof..."

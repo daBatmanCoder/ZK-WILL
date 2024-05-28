@@ -3,7 +3,6 @@ const crypto = require("crypto");
 const fs = require("fs");
 const { buildMimcSponge } = require("circomlibjs");
 
-
 async function generateNull_N_Secret_To_File() {
 	const commitment = await generateCommitment();
 	console.log(commitment);
@@ -19,8 +18,10 @@ async function generateNull_N_Secret_To_File() {
 
 async function generateCommitment() {
     const mimc = await buildMimcSponge();
-    const nullifier = ethers.BigNumber.from(crypto.randomBytes(31)).toString();
-    const secret = ethers.BigNumber.from(crypto.randomBytes(31)).toString();
+    let nullifier = ethers.BigNumber.from(crypto.randomBytes(31)).toString();
+    let secret = ethers.BigNumber.from(crypto.randomBytes(31)).toString();
+	nullifier =  "143219231971950064803620966993934751690928559122751823639284094013557618762";
+    secret = "117635271174476322877126871440007608098610302479546379315735968509461067740";
     const commitment = mimc.F.toString(mimc.multiHash([nullifier, secret]));
     const response =  {
         nullifier: nullifier,
@@ -620,3 +621,5 @@ const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 const merkleTreeContract = new ethers.Contract(contractAddress, contractABI, wallet);
 
 (async () => {  await generateNull_N_Secret_To_File(); })();
+
+

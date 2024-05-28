@@ -26,9 +26,34 @@ const contractABI = [
 				"internalType": "contract IVerifier",
 				"name": "_verifier",
 				"type": "address"
+			},
+			{
+				"internalType": "contract IMetadata",
+				"name": "_metadataContract",
+				"type": "address"
+			},
+			{
+				"internalType": "contract IServiceProviders",
+				"name": "_spsContract",
+				"type": "address"
+			},
+			{
+				"internalType": "contract IPalo",
+				"name": "_fundsContract",
+				"type": "address"
+			},
+			{
+				"internalType": "string",
+				"name": "_serviceProviderENS",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_metaData",
+				"type": "string"
 			}
 		],
-		"stateMutability": "nonpayable",
+		"stateMutability": "payable",
 		"type": "constructor"
 	},
 	{
@@ -55,44 +80,6 @@ const contractABI = [
 		],
 		"name": "Commit",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256[2]",
-				"name": "_proof_a",
-				"type": "uint256[2]"
-			},
-			{
-				"internalType": "uint256[2][2]",
-				"name": "_proof_b",
-				"type": "uint256[2][2]"
-			},
-			{
-				"internalType": "uint256[2]",
-				"name": "_proof_c",
-				"type": "uint256[2]"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_nullifierHash",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_root",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_commitment",
-				"type": "uint256"
-			}
-		],
-		"name": "depositToBox",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -126,24 +113,6 @@ const contractABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_commitment",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint32",
-				"name": "_lifeSpan",
-				"type": "uint32"
-			}
-		],
-		"name": "openBOX",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -161,6 +130,264 @@ const contractABI = [
 		],
 		"name": "SubTree",
 		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "showAddresss",
+				"type": "address"
+			}
+		],
+		"name": "showAddress",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "FIELD_SIZE",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "INDEX_OF_METADATA",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "ROOT_HISTORY_SIZE",
+		"outputs": [
+			{
+				"internalType": "uint32",
+				"name": "",
+				"type": "uint32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "SERVICE_PROVIDER_ENS",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "SubscribersList",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "packageStartingTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "productIDHash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "period",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "TTL",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "ZERO_VALUE",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_productID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_setupFee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_monthlyFee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_metaData",
+				"type": "string"
+			}
+		],
+		"name": "_addProduct",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_productID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_setupFee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_monthlyFee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_metaData",
+				"type": "string"
+			}
+		],
+		"name": "addProduct",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "calculateMoneyToBePaid",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "commitments",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_commitmentDeposit",
+				"type": "uint256"
+			}
+		],
+		"name": "createSubscription",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "currentRootIndex",
+		"outputs": [
+			{
+				"internalType": "uint32",
+				"name": "",
+				"type": "uint32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_productID",
+				"type": "uint256"
+			}
+		],
+		"name": "deleteProduct",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -191,134 +418,13 @@ const contractABI = [
 			},
 			{
 				"internalType": "uint256",
-				"name": "_commitment",
+				"name": "_productIDHash",
 				"type": "uint256"
 			}
 		],
-		"name": "withdrawMoney",
+		"name": "endSubscription",
 		"outputs": [],
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"name": "boxAmount",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"name": "boxCreationTime",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"name": "BOXLifespan",
-		"outputs": [
-			{
-				"internalType": "uint32",
-				"name": "",
-				"type": "uint32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"name": "boxOwner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"name": "commitments",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "currentRootIndex",
-		"outputs": [
-			{
-				"internalType": "uint32",
-				"name": "",
-				"type": "uint32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "FIELD_SIZE",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -335,6 +441,19 @@ const contractABI = [
 				"internalType": "bytes32",
 				"name": "",
 				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fundsContract",
+		"outputs": [
+			{
+				"internalType": "contract IPalo",
+				"name": "",
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -373,13 +492,32 @@ const contractABI = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "hasher",
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_productID",
+				"type": "uint256"
+			}
+		],
+		"name": "getProductMetaData",
 		"outputs": [
 			{
-				"internalType": "contract IHasher",
+				"internalType": "string",
 				"name": "",
-				"type": "address"
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getServiceProviderMetadata",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
 			}
 		],
 		"stateMutability": "view",
@@ -404,6 +542,57 @@ const contractABI = [
 				"internalType": "bytes32",
 				"name": "",
 				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "element",
+				"type": "uint256"
+			}
+		],
+		"name": "hashSingleElement",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "hasher",
+		"outputs": [
+			{
+				"internalType": "contract IHasher",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "indexOfPackage",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -479,13 +668,67 @@ const contractABI = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "ROOT_HISTORY_SIZE",
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "nullifiers",
 		"outputs": [
 			{
-				"internalType": "uint32",
+				"internalType": "bool",
 				"name": "",
-				"type": "uint32"
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "packageBelongsTo",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "productsList",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "setupFee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "monthlyFee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "productIndexForMetaData",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -511,6 +754,49 @@ const contractABI = [
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256[2]",
+				"name": "_proof_a",
+				"type": "uint256[2]"
+			},
+			{
+				"internalType": "uint256[2][2]",
+				"name": "_proof_b",
+				"type": "uint256[2][2]"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "_proof_c",
+				"type": "uint256[2]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_nullifierHash",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_root",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "_productIDHash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "string",
+				"name": "ens",
+				"type": "string"
+			}
+		],
+		"name": "startSubscription",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "verifier",
 		"outputs": [
@@ -518,19 +804,6 @@ const contractABI = [
 				"internalType": "contract IVerifier",
 				"name": "",
 				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "ZERO_VALUE",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -556,7 +829,7 @@ const contractABI = [
 		"type": "function"
 	}
 ];
-const contractAddress = "0xD5175E00b57c3539f9690D503A3148B526F31a98";
+const contractAddress = "0x13f621e2273af6921f3403159c794225f76dD9f2";
 const provider = new ethers.providers.JsonRpcProvider("https://polygon-mumbai.infura.io/v3/97d9c59729a745b790c2b1118ba098ef");
 const PRIVATE_KEY = "1cf3bacf75f3c8580aabf395ddb3eb5bf2943ce44cc9907a60802a305c3f4e09"
 const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
@@ -588,7 +861,6 @@ async function prepareProofFile() {
 
     const mimc = await buildMimcSponge();
     const levels = await merkleTreeContract.levels(); 
-	console.log(levels);
 	const null_n_secret = fs.readFileSync("./null_n_secret.json", "utf-8");
 	const { nullifier, secret } = JSON.parse(null_n_secret);
 
@@ -616,7 +888,7 @@ async function calculateInputToProof(mimc, levels, elements, nullifier, secret) 
 	const commitment = mimc.F.toString(mimc.multiHash([nullifier, secret]));
 
 	const { root, pathElements, pathIndices } = calculateMerkleRootAndPath(mimc, levels, elements, commitment);
-
+	console.log(pathElements);
 	// Convert commitments to hex strings with '0x' prefix
 	const pathElementss = pathElements.map(commitment => {
 		// Check if the commitment already starts with '0x', if not, convert it to hex string
@@ -655,7 +927,6 @@ function calculateMerkleRootAndPath(mimc, levels, elements, element) {
     const root = layers[levels].length > 0 ? layers[levels][0] : zeros[levels - 1];
     let pathElements = [];
     let pathIndices = [];
-	
     if (element) {
 
         const bne = ethers.BigNumber.from(element);
@@ -667,6 +938,7 @@ function calculateMerkleRootAndPath(mimc, levels, elements, element) {
             index >>= 1;
         }
     }
+
 
 	console.log(root.toString());	
     return {
